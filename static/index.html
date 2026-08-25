@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>软件工程 · 教材问答</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root {
+      --paper: #f3eee4;
+      --panel: #fffaf2;
+      --ink: #1c1916;
+      --muted: #6b645b;
+      --line: #e2d8c8;
+      --cinnabar: #9a2f1c;
+      --cinnabar-soft: #f3d8d0;
+      --highlight: rgba(232, 168, 52, 0.38);
+      --shadow: 0 10px 30px rgba(48, 32, 16, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: "Source Han Serif SC", "Songti SC", "Noto Serif SC", "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #fff8ea, transparent 55%),
+        var(--paper);
+    }
+    .app {
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(380px, 42%) 1fr;
+      gap: 0;
+    }
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      min-width: 0;
+    }
+    header {
+      padding: 22px 24px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+    header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 24px 0;
+    }
+    .chips button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .chips button:hover { border-color: var(--cinnabar); color: var(--cinnabar); }
+    .log {
+      flex: 1;
+      overflow: auto;
+      padding: 16px 24px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .bubble {
+      max-width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      line-height: 1.7;
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--cinnabar);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .bubble.bot {
+      align-self: stretch;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-bottom-left-radius: 4px;
+    }
+    .bubble.err { border-color: #d46a6a; background: #fff5f5; }
+    .cites { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .cite {
+      border: 1px solid var(--line);
+      background: #fbf6ed;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+    }
+    .cite:hover { border-color: var(--cinnabar); background: var(--cinnabar-soft); }
+    .cite .loc {
+      font-size: 12px;
+      color: var(--cinnabar);
+      font-weight: 700;
+    }
+    .cite .quote {
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    form {
+      display: flex;
+      gap: 8px;
+      padding: 14px 24px 20px;
+      border-top: 1px solid var(--line);
+      background: #fffdf8;
+    }
+    form textarea {
+      flex: 1;
+      resize: none;
+      min-height: 52px;
+      max-height: 140px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 15px;
+      outline: none;
+    }
+    form textarea:focus { border-color: var(--cinnabar); }
+    form button {
+      background: var(--cinnabar);
+      color: #fff;
+      border: 0;
+      border-radius: 12px;
+      padding: 0 18px;
+      font-family: inherit;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    form button:disabled { opacity: 0.55; cursor: wait; }
+    .viewer {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: #ece4d6;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: #fffaf2;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .toolbar button {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .stage {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      padding: 18px;
+    }
+    .page-wrap {
+      position: relative;
+      box-shadow: 0 18px 50px rgba(40, 24, 8, 0.18);
+      background: #fff;
+    }
+    .page-wrap canvas { display: block; }
+    .hl {
+      position: absolute;
+      background: var(--highlight);
+      outline: 1px solid rgba(154, 47, 28, 0.45);
+      pointer-events: none;
+    }
+    .status { color: var(--muted); }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: 55% 45%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="sidebar">
+      <header>
+        <h1>软件工程 · 教材问答</h1>
+        <p id="metaLine">张琼声 2024 年版。答案只来自教材原文，并标出页码与行号。</p>
+      </header>
+      <div class="chips" id="chips"></div>
+      <div class="log" id="log"></div>
+      <form id="form">
+        <textarea id="q" placeholder="例如：什么是软件生存周期？请列出各阶段。"></textarea>
+        <button type="submit" id="go">提问</button>
+      </form>
+    </section>
+    <section class="viewer">
+      <div class="toolbar">
+        <button type="button" id="prev">上一页</button>
+        <button type="button" id="next">下一页</button>
+        <span id="pageLabel">PDF 第 1 页</span>
+        <span class="status" id="status">正在加载教材…</span>
+      </div>
+      <div class="stage" id="stage">
+        <div class="page-wrap" id="pageWrap">
+          <canvas id="pdfCanvas"></canvas>
+          <div id="hlLayer"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    const logEl = document.getElementById("log");
+    const form = document.getElementById("form");
+    const qEl = document.getElementById("q");
+    const go = document.getElementById("go");
+    const chips = document.getElementById("chips");
+    const canvas = document.getElementById("pdfCanvas");
+    const hlLayer = document.getElementById("hlLayer");
+    const pageLabel = document.getElementById("pageLabel");
+    const status = document.getElementById("status");
+
+    const SUGGEST = [
+      "什么是软件工程？",
+      "软件生存周期包括哪些阶段？",
+      "瀑布模型的优缺点是什么？",
+      "什么是需求工程？",
+      "简述软件测试的目的与原则。",
+    ];
+    SUGGEST.forEach((text) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = text;
+      b.onclick = () => { qEl.value = text; form.requestSubmit(); };
+      chips.appendChild(b);
+    });
+
+    let pdfDoc = null;
+    let pageNum = 1;
+    let pendingHighlights = [];
+    let rendering = false;
+
+    function plumberToCss(box, viewport) {
+      const rect = viewport.convertToViewportRectangle([
+        box.x0,
+        box.page_height - box.bottom,
+        box.x1,
+        box.page_height - box.top,
+      ]);
+      const left = Math.min(rect[0], rect[2]);
+      const top = Math.min(rect[1], rect[3]);
+      return {
+        left,
+        top,
+        width: Math.abs(rect[2] - rect[0]),
+        height: Math.abs(rect[3] - rect[1]),
+      };
+    }
+
+    async function renderPage(num, highlights) {
+      if (!pdfDoc || rendering) {
+        pendingHighlights = highlights || pendingHighlights;
+        pageNum = num;
+        return;
+      }
+      rendering = true;
+      pageNum = num;
+      pendingHighlights = highlights || [];
+      const page = await pdfDoc.getPage(num);
+      const viewport = page.getViewport({ scale: 1.25 });
+      const ctx = canvas.getContext("2d");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      hlLayer.innerHTML = "";
+      hlLayer.style.width = viewport.width + "px";
+      hlLayer.style.height = viewport.height + "px";
+      hlLayer.style.position = "absolute";
+      hlLayer.style.left = "0";
+      hlLayer.style.top = "0";
+      for (const box of pendingHighlights) {
+        if (box.pdf_page !== num) continue;
+        const css = plumberToCss(box, viewport);
+        const div = document.createElement("div");
+        div.className = "hl";
+        div.style.left = css.left + "px";
+        div.style.top = css.top + "px";
+        div.style.width = Math.max(css.width, 8) + "px";
+        div.style.height = Math.max(css.height, 8) + "px";
+        hlLayer.appendChild(div);
+      }
+      pageLabel.textContent = "PDF 第 " + num + " / " + pdfDoc.numPages + " 页";
+      rendering = false;
+    }
+
+    async function jumpTo(pdfPage, highlights) {
+      if (!pdfDoc) return;
+      const num = Math.min(Math.max(1, pdfPage), pdfDoc.numPages);
+      await renderPage(num, highlights || []);
+      document.getElementById("pageWrap").scrollIntoView({ block: "start" });
+    }
+
+    document.getElementById("prev").onclick = () => {
+      if (pageNum > 1) renderPage(pageNum - 1, pendingHighlights);
+    };
+    document.getElementById("next").onclick = () => {
+      if (pdfDoc && pageNum < pdfDoc.numPages) renderPage(pageNum + 1, pendingHighlights);
+    };
+
+    function addBubble(role, html, cls) {
+      const div = document.createElement("div");
+      div.className = "bubble " + role + (cls ? " " + cls : "");
+      if (typeof html === "string") div.innerHTML = html;
+      else div.appendChild(html);
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+      return div;
+    }
+
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>"']/g, (c) => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+      ));
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const question = qEl.value.trim();
+      if (!question) return;
+      addBubble("user", escapeHtml(question));
+      qEl.value = "";
+      go.disabled = true;
+      const wait = addBubble("bot", "正在检索教材并生成答案…");
+      try {
+        const res = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+        const data = await res.json();
+        wait.remove();
+        if (!res.ok) {
+          addBubble("bot", escapeHtml(data.detail || "请求失败"), "err");
+          return;
+        }
+        const wrap = document.createElement("div");
+        const ans = document.createElement("div");
+        ans.textContent = data.answer || "（无答案）";
+        wrap.appendChild(ans);
+        if (data.citations && data.citations.length) {
+          const box = document.createElement("div");
+          box.className = "cites";
+          data.citations.forEach((c, i) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "cite";
+            btn.innerHTML =
+              "<div class='loc'>依据 " + (i + 1) + " · " + escapeHtml(c.location_label || "") + "</div>" +
+              (c.quote ? "<div class='quote'>“" + escapeHtml(c.quote) + "”</div>" : "") +
+              (c.heading ? "<div class='quote'>" + escapeHtml(c.heading) + "</div>" : "");
+            btn.onclick = () => jumpTo(c.pdf_page, c.highlights || []);
+            box.appendChild(btn);
+          });
+          wrap.appendChild(box);
+          const first = data.citations[0];
+          jumpTo(first.pdf_page, first.highlights || []);
+        }
+        addBubble("bot", wrap);
+      } catch (err) {
+        wait.remove();
+        addBubble("bot", "请求出错：" + escapeHtml(err.message), "err");
+      } finally {
+        go.disabled = false;
+        qEl.focus();
+      }
+    });
+
+    (async function init() {
+      try {
+        const meta = await fetch("/api/health").then((r) => r.json());
+        if (meta.title) {
+          document.getElementById("metaLine").textContent =
+            meta.title + " · 共 " + (meta.page_count || "?") + " 页。答案均带来源页码与行号。";
+        }
+        pdfDoc = await pdfjsLib.getDocument("/book.pdf").promise;
+        status.textContent = "教材已加载";
+        await renderPage(1, []);
+      } catch (err) {
+        status.textContent = "PDF 加载失败：" + err.message;
+      }
+    })();
+  </script>
+</body>
+</html>
