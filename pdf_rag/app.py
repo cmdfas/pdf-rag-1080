@@ -7,10 +7,10 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .config import BOOK_LINK, DEFAULT_PDF, STATIC_DIR
+from .config import BOOK_LINK, DEFAULT_PDF, EMBED_PATH, STATIC_DIR
 from .generate import answer_question
-from .config import EMBED_PATH
 from .index import index_ready, load_meta
+from .llm import chat_backend
 
 app = FastAPI(title="教材 RAG", version="1.0.0")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -37,6 +37,7 @@ def health() -> dict:
         "page_count": (meta or {}).get("page_count"),
         "title": (meta or {}).get("title"),
         "embeddings_ready": EMBED_PATH.exists(),
+        "chat_backend": chat_backend(),
     }
 
 

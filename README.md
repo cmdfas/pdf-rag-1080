@@ -48,6 +48,8 @@ python -m pdf_rag serve
 
 打开 http://127.0.0.1:8000
 
+部署到服务器或 Docker 见 [docs/部署.md](docs/部署.md)。生产请配置 `XAI_API_KEY`，不要用本机 `grok login`。
+
 命令行：
 
 ```bash

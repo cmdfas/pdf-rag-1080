@@ -294,12 +294,31 @@ def _parse_json_content(content: str) -> dict[str, Any]:
         raise
 
 
-def chat_json(system: str, user: str, model: str | None = None) -> dict[str, Any]:
-    content = _cli_chat(
-        [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        model=model,
+def chat_backend() -> str:
+    """Production should set XAI_API_KEY (official API). Local CLI login is the fallback."""
+    if _api_key():
+        return "api"
+    return "cli-proxy"
+
+
+def _api_chat(messages: list[dict[str, str]], model: str | None = None) -> str:
+    client = _client()
+    resp = client.chat.completions.create(
+        model=model or XAI_MODEL,
+        temperature=0.1,
+        messages=messages,
+        response_format={"type": "json_object"},
     )
+    return resp.choices[0].message.content or "{}"
+
+
+def chat_json(system: str, user: str, model: str | None = None) -> dict[str, Any]:
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+    if _api_key():
+        content = _api_chat(messages, model=model)
+    else:
+        content = _cli_chat(messages, model=model)
     return _parse_json_content(content)
